@@ -57,7 +57,7 @@ class AppCubit extends Cubit<AppStates> {
   HomeModel? homeModel;
   Future<void> getHomeData() async {
     emit(LoadingHomeState());
-    DioHelper.getData(
+    await DioHelper.getData(
       url: HOME,
     ).then((value) {
       emit(SuccessHomeState());
@@ -78,8 +78,8 @@ class AppCubit extends Cubit<AppStates> {
 
   //category
   CategoriesModel? categoriesModel;
-  void getCategoriesData() {
-    DioHelper.getData(
+  Future<void> getCategoriesData() async {
+    await DioHelper.getData(
       url: CATEGORIES,
     ).then((value) {
       categoriesModel = CategoriesModel.fromJson(value.data);
@@ -92,9 +92,9 @@ class AppCubit extends Cubit<AppStates> {
   }
 
   CategoryProductModel? categoryProductModel;
-  void getCategoryProducts(int categoryId) {
+  Future<void> getCategoryProducts(int categoryId) async {
     emit(CategoryProductsLoadingState());
-    DioHelper.getData(
+    await DioHelper.getData(
       url: 'categories/$categoryId',
     ).then((value) {
       categoryProductModel = CategoryProductModel.fromJson(value.data);
@@ -113,9 +113,9 @@ class AppCubit extends Cubit<AppStates> {
 
   //favorites
   GetFavModel? getFavModel;
-  void getFavoritesData() {
+  Future<void> getFavoritesData() async {
     emit(LoadingFavState());
-    DioHelper.getData(
+    await DioHelper.getData(
       url: FAVORITES,
     ).then(
       (value) {
@@ -132,10 +132,10 @@ class AppCubit extends Cubit<AppStates> {
   }
 
   ChangeFavModel? changeFavModel;
-  void changeFavState(int productId) {
+  Future<void> changeFavState(int productId) async {
     favorites[productId] = !favorites[productId]!;
     emit(LoadingChangeFavState());
-    DioHelper.postData(
+    await DioHelper.postData(
       url: FAVORITES,
       data: {
         'product_id': productId,
@@ -164,9 +164,9 @@ class AppCubit extends Cubit<AppStates> {
 
   //carts
   GetCartModel? getCartModel;
-  void getCartData() {
+  Future<void> getCartData() async {
     emit(LoadingCartState());
-    DioHelper.getData(
+    await DioHelper.getData(
       url: CARTS,
     ).then((value) {
       getCartModel = GetCartModel.fromJson(value.data);
@@ -178,11 +178,18 @@ class AppCubit extends Cubit<AppStates> {
     });
   }
 
+  int? getCartCount() {
+    if (getCartModel != null && getCartModel!.cartData!.cartItems.isNotEmpty) {
+      return getCartModel!.cartData!.cartItems.length;
+    }
+    return null;
+  }
+
   ChangeCartModel? changeCartModel;
-  void changeCartState(int cartProductId) {
+  Future<void> changeCartState(int cartProductId) async {
     carts[cartProductId] = !carts[cartProductId]!;
     emit(LoadingChangeCartState());
-    DioHelper.postData(
+    await DioHelper.postData(
       url: 'carts',
       data: {
         "product_id": cartProductId,
@@ -209,9 +216,9 @@ class AppCubit extends Cubit<AppStates> {
   }
 
   ChangeCartModel? deleteCartModel;
-  void deleteProductCart(int productCartId) {
+  Future<void> deleteProductCart(int productCartId) async {
     emit(LoadingDeleteCartProductState());
-    DioHelper.deleteData(
+    await DioHelper.deleteData(
       url: 'carts/$productCartId',
     ).then(
       (value) {
@@ -230,13 +237,14 @@ class AppCubit extends Cubit<AppStates> {
   }
 
   AddOrderModel? addOrderModel;
-  void addOrder(
-      {int addressId = 35,
-      int paymentMethod = 1,
-      bool usePoints = false,
-      required BuildContext context}) {
+  Future<void> addOrder({
+    int addressId = 35,
+    int paymentMethod = 1,
+    bool usePoints = false,
+    required BuildContext context,
+  }) async {
     emit(LoadingAddOrderState());
-    DioHelper.postData(
+    await DioHelper.postData(
       url: ORDERS,
       data: {
         'address_id': addressId,
@@ -256,9 +264,9 @@ class AppCubit extends Cubit<AppStates> {
   }
 
   GetOrderModel? getOrderModel;
-  void getOrders() {
+  Future<void> getOrders() async {
     emit(LoadingGetOrdersState());
-    DioHelper.getData(
+    await DioHelper.getData(
       url: ORDERS,
     ).then((value) {
       getOrderModel = GetOrderModel.fromJson(value.data);
@@ -272,9 +280,9 @@ class AppCubit extends Cubit<AppStates> {
   }
 
   OrderDetailsModel? getOrderDetailsModel;
-  void getOrderDetails(int orderId) {
+  Future<void> getOrderDetails(int orderId) async {
     emit(LoadingGetOrderDetailsState());
-    DioHelper.getData(
+    await DioHelper.getData(
       url: '$ORDERS/$orderId',
     ).then((value) {
       emit(SuccessGetOrderDetailsState());
@@ -288,9 +296,9 @@ class AppCubit extends Cubit<AppStates> {
 
   //search
   SearchModel? searchModel;
-  void searchProducts(String text) {
+  Future<void> searchProducts(String text) async {
     emit(LoadingSearchState());
-    DioHelper.postData(
+    await DioHelper.postData(
       url: SEARCH,
       data: {'text': text},
     ).then((value) {
@@ -305,10 +313,10 @@ class AppCubit extends Cubit<AppStates> {
 
   //FAQs
   FAQModel? faqModel;
-  void fQSs() {
+  Future<void> fQSs() async {
     emit(LoadingFAQsState());
 
-    DioHelper.getData(
+    await DioHelper.getData(
       url: FAQs,
     ).then((value) {
       emit(SuccessFAQsState());
@@ -320,3 +328,87 @@ class AppCubit extends Cubit<AppStates> {
     });
   }
 }
+
+/*To update the badge on a bottom navigation bar item icon using the BLoC pattern, you can follow these steps:
+
+1. Define a new state in your BLoC class to represent the badge count. For example, you can create a BadgeCountState class that holds the count value.
+
+dart
+class BadgeCountState {
+  final int count;
+
+  BadgeCountState(this.count);
+}
+
+
+2. Add a new event in your BLoC class to update the badge count. For example, you can create a UpdateBadgeCountEvent class that takes the updated count value.
+
+dart
+class UpdateBadgeCountEvent {
+  final int count;
+
+  UpdateBadgeCountEvent(this.count);
+}
+
+
+3. In your BLoC class, handle the UpdateBadgeCountEvent and update the state accordingly.
+
+dart
+class YourBloc extends Bloc<YourEvent, YourState> {
+  // ...
+
+  @override
+  Stream<YourState> mapEventToState(YourEvent event) async* {
+    if (event is UpdateBadgeCountEvent) {
+      yield BadgeCountState(event.count);
+    }
+    // Handle other events here
+  }
+
+  // ...
+}
+
+
+4. In your widget that contains the bottom navigation bar, listen to the BLoC state changes and update the badge count accordingly.
+
+dart
+class YourWidget extends StatelessWidget {
+  // ...
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<YourBloc, YourState>(
+      builder: (context, state) {
+        if (state is BadgeCountState) {
+          return BottomNavigationBar(
+            // ...
+            items: [
+              BottomNavigationBarItem(
+                icon: Icon(Icons.home),
+                label: 'Home',
+                badge: state.count > 0 ? Badge(count: state.count) : null,
+              ),
+              // ... Add other bottom navigation bar items
+            ],
+            // ...
+          );
+        }
+        // Handle other states or return a default widget
+        return SizedBox();
+      },
+    );
+  }
+
+  // ...
+}
+
+
+5. Whenever you want to update the badge count, dispatch the UpdateBadgeCountEvent to the BLoC.
+
+dart
+BlocProvider.of<YourBloc>(context).add(UpdateBadgeCountEvent(newCount));
+
+
+Replace YourBloc, YourEvent, YourState with the actual names of your BLoC class, event class, and state class respectively. Also, make sure you have set up the correct BLoC provider and BlocBuilder in your widget tree.
+
+This approach allows you to update the badge count dynamically based on events or any other logic you define in your BLoC.*/

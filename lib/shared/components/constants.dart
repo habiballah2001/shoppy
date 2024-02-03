@@ -108,8 +108,7 @@ class Lists {
           icon: BlocBuilder<AppCubit, AppStates>(
             builder: (context, state) {
               AppCubit cubit = AppCubit.get(context);
-              return state is SuccessGetCartState &&
-                      cubit.getCartModel!.cartData!.cartItems.isNotEmpty
+              return cubit.getCartCount() != null
                   ? Badge(
                       label: Text(cubit.getCartModel!.cartData!.cartItems.length
                               .toString() ??
