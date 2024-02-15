@@ -1,8 +1,11 @@
 import 'dart:developer';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../models/user_data_model.dart';
-import '../../shared/data_source/end_points.dart';
-import '../../shared/data_source/remote/dio_helper.dart';
+import '../../view/modules/login&register/login_screen.dart';
+import '../../res/data_source/end_points.dart';
+import '../../res/data_source/local/cache_helper.dart';
+import '../../res/data_source/remote/dio_helper.dart';
+import '../../res/utils/custom_methods.dart';
 import 'auth_states.dart';
 
 class AuthCubit extends Cubit<AuthStates> {
@@ -115,6 +118,19 @@ class AuthCubit extends Cubit<AuthStates> {
     }).catchError((error) {
       emit(ErrorUpdateUserDateState(error.toString()));
       log('ERROR IS ${error.toString()}');
+    });
+  }
+
+  void signOut(context) {
+    CacheHelper.removeData(key: 'token').then((value) {
+      if (value) {
+        Utils.navigateAndFinish(
+          widget: const LoginScreen(),
+          context: context,
+        );
+      }
+    }).catchError((e) {
+      log('err in logout $e');
     });
   }
 }

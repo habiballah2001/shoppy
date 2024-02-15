@@ -1,8 +1,9 @@
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shoppy/models/address_model.dart';
 import 'package:shoppy/models/faqs_model.dart';
-import 'package:shoppy/shared/services/custom_methods.dart';
+import 'package:shoppy/res/utils/custom_methods.dart';
 import '../../models/cart/change_cart_model.dart';
 import '../../models/cart/get_cart_model.dart';
 import '../../models/category/category_model.dart';
@@ -14,9 +15,9 @@ import '../../models/home/search_model.dart';
 import '../../models/orders/add_order_model.dart';
 import '../../models/orders/get_order_model.dart';
 import '../../models/orders/order_details_model.dart';
-import '../../shared/data_source/end_points.dart';
-import '../../shared/data_source/local/cache_helper.dart';
-import '../../shared/data_source/remote/dio_helper.dart';
+import '../../res/data_source/end_points.dart';
+import '../../res/data_source/local/cache_helper.dart';
+import '../../res/data_source/remote/dio_helper.dart';
 import 'shop_states.dart';
 
 class AppCubit extends Cubit<AppStates> {
@@ -40,10 +41,10 @@ class AppCubit extends Cubit<AppStates> {
       isDark = shared;
       emit(ModeState());
     } else {
-      isDark = !isDark;
+      //isDark = !isDark;
       CacheHelper.saveData(
         key: 'isDark',
-        value: isDark,
+        value: !isDark,
       ).then((value) {
         emit(ModeState());
       });
@@ -53,11 +54,24 @@ class AppCubit extends Cubit<AppStates> {
   //home
   Map<int?, bool?> favorites = {};
   Map<int?, bool?> carts = {};
+  String language = 'en';
+
+  Future<void> changeLang({required String lang}) async {
+    emit(LoadingLangState());
+    try {
+      language = lang;
+    } catch (error) {
+      emit(ErrorLangState(error.toString()));
+    } finally {
+      emit(SuccessLangState());
+    }
+  }
 
   HomeModel? homeModel;
   Future<void> getHomeData() async {
     emit(LoadingHomeState());
     await DioHelper.getData(
+      lang: language,
       url: HOME,
     ).then((value) {
       emit(SuccessHomeState());
@@ -80,6 +94,7 @@ class AppCubit extends Cubit<AppStates> {
   CategoriesModel? categoriesModel;
   Future<void> getCategoriesData() async {
     await DioHelper.getData(
+      lang: language,
       url: CATEGORIES,
     ).then((value) {
       categoriesModel = CategoriesModel.fromJson(value.data);
@@ -95,6 +110,7 @@ class AppCubit extends Cubit<AppStates> {
   Future<void> getCategoryProducts(int categoryId) async {
     emit(CategoryProductsLoadingState());
     await DioHelper.getData(
+      lang: language,
       url: 'categories/$categoryId',
     ).then((value) {
       categoryProductModel = CategoryProductModel.fromJson(value.data);
@@ -116,6 +132,7 @@ class AppCubit extends Cubit<AppStates> {
   Future<void> getFavoritesData() async {
     emit(LoadingFavState());
     await DioHelper.getData(
+      lang: language,
       url: FAVORITES,
     ).then(
       (value) {
@@ -146,8 +163,15 @@ class AppCubit extends Cubit<AppStates> {
         log('changeFavState${value.data}');
         if (changeFavModel!.status == false) {
           favorites[productId] = !favorites[productId]!;
+          Utils.toast(
+              body: changeFavModel!.message.toString(), color: Colors.red);
+
+          log(changeFavModel!.message.toString());
         } else {
           getFavoritesData();
+          Utils.toast(
+              body: changeFavModel!.message.toString(), color: Colors.green);
+
           log(changeFavModel!.message.toString());
         }
         emit(SuccessChangeFavState(changeFavModel));
@@ -165,8 +189,9 @@ class AppCubit extends Cubit<AppStates> {
   //carts
   GetCartModel? getCartModel;
   Future<void> getCartData() async {
-    emit(LoadingCartState());
+    emit(LoadingGetCartState());
     await DioHelper.getData(
+      lang: language,
       url: CARTS,
     ).then((value) {
       getCartModel = GetCartModel.fromJson(value.data);
@@ -178,11 +203,28 @@ class AppCubit extends Cubit<AppStates> {
     });
   }
 
-  int? getCartCount() {
+  int? getCartLength() {
     if (getCartModel != null && getCartModel!.cartData!.cartItems.isNotEmpty) {
       return getCartModel!.cartData!.cartItems.length;
     }
     return null;
+  }
+
+  Future<void> updateQuantity({
+    required int cartId,
+    required int quantity,
+  }) async {
+    emit(LoadingUpdateCartState());
+    await DioHelper.putData(url: '$CARTS/$cartId', data: {"quantity": quantity})
+        .then((value) {
+      emit(SuccessUpdateCartState());
+      getCartData();
+      log('quantity updated $value');
+    }).catchError((error) {
+      emit(ErrorUpdateCartState(error));
+
+      log('err in quantity update $error');
+    });
   }
 
   ChangeCartModel? changeCartModel;
@@ -199,8 +241,14 @@ class AppCubit extends Cubit<AppStates> {
         changeCartModel = ChangeCartModel.fromJson(value.data);
         if (changeCartModel!.status == false) {
           carts[cartProductId] = !carts[cartProductId]!;
+          Utils.toast(
+              body: changeCartModel!.message.toString(), color: Colors.red);
+          log(changeCartModel!.message.toString());
         } else {
           getCartData();
+          Utils.toast(
+              body: changeCartModel!.message.toString(), color: Colors.green);
+
           log(changeCartModel!.message.toString());
         }
 
@@ -236,6 +284,7 @@ class AppCubit extends Cubit<AppStates> {
     });
   }
 
+  //orders
   AddOrderModel? addOrderModel;
   Future<void> addOrder({
     int addressId = 35,
@@ -254,7 +303,7 @@ class AppCubit extends Cubit<AppStates> {
     ).then((value) {
       emit(SuccessAddOrderState());
       getCartData();
-      CustomMethods.popNavigate(context);
+      Utils.popNavigate(context);
       addOrderModel = AddOrderModel.fromJson(value.data);
       log('${value.data}');
     }).catchError((error) {
@@ -263,10 +312,36 @@ class AppCubit extends Cubit<AppStates> {
     });
   }
 
+  Future<void> estimateOrderCost({
+    required var promoCodeId,
+    bool usePoints = true,
+  }) async {
+    await DioHelper.postData(url: ESTIMATE_ORDER, data: {
+      "use_points": usePoints,
+      "promo_code_id": promoCodeId,
+    }).then((value) {
+      emit(SuccessEstimateOrderState());
+    }).catchError((error) {
+      emit(ErrorEstimateOrderState(error));
+    });
+  }
+
+  Future<void> cancelOrder({required int orderId}) async {
+    emit(LoadingCancelOrderState());
+    await DioHelper.getData(lang: language, url: '$ORDERS/$orderId/cancel')
+        .then((value) {
+      emit(SuccessCancelOrderState());
+      getOrders();
+    }).catchError((error) {
+      emit(ErrorCancelOrderState(error));
+    });
+  }
+
   GetOrderModel? getOrderModel;
   Future<void> getOrders() async {
     emit(LoadingGetOrdersState());
     await DioHelper.getData(
+      lang: language,
       url: ORDERS,
     ).then((value) {
       getOrderModel = GetOrderModel.fromJson(value.data);
@@ -283,6 +358,7 @@ class AppCubit extends Cubit<AppStates> {
   Future<void> getOrderDetails(int orderId) async {
     emit(LoadingGetOrderDetailsState());
     await DioHelper.getData(
+      lang: language,
       url: '$ORDERS/$orderId',
     ).then((value) {
       emit(SuccessGetOrderDetailsState());
@@ -311,12 +387,26 @@ class AppCubit extends Cubit<AppStates> {
     });
   }
 
+  //address
+
+  AddressModel? addressModel;
+  Future<void> getAddresses() async {
+    emit(LoadingGetAddressState());
+    await DioHelper.getData(url: addresses).then((value) {
+      addressModel = AddressModel.fromJson(value.data);
+      emit(SuccessGetAddressState());
+    }).catchError((e) {
+      emit(ErrorGetAddressState(e));
+    });
+  }
+
   //FAQs
   FAQModel? faqModel;
   Future<void> fQSs() async {
     emit(LoadingFAQsState());
 
     await DioHelper.getData(
+      lang: language,
       url: FAQs,
     ).then((value) {
       emit(SuccessFAQsState());
@@ -327,88 +417,32 @@ class AppCubit extends Cubit<AppStates> {
       log('ERROR fQSs ====================> ${error.toString()}');
     });
   }
-}
 
-/*To update the badge on a bottom navigation bar item icon using the BLoC pattern, you can follow these steps:
+  Future<void> sendComplaints({
+    required String userName,
+    required String phone,
+    required String email,
+    required String msg,
+    required BuildContext context,
+  }) async {
+    emit(LoadingComplaintsState());
 
-1. Define a new state in your BLoC class to represent the badge count. For example, you can create a BadgeCountState class that holds the count value.
-
-dart
-class BadgeCountState {
-  final int count;
-
-  BadgeCountState(this.count);
-}
-
-
-2. Add a new event in your BLoC class to update the badge count. For example, you can create a UpdateBadgeCountEvent class that takes the updated count value.
-
-dart
-class UpdateBadgeCountEvent {
-  final int count;
-
-  UpdateBadgeCountEvent(this.count);
-}
-
-
-3. In your BLoC class, handle the UpdateBadgeCountEvent and update the state accordingly.
-
-dart
-class YourBloc extends Bloc<YourEvent, YourState> {
-  // ...
-
-  @override
-  Stream<YourState> mapEventToState(YourEvent event) async* {
-    if (event is UpdateBadgeCountEvent) {
-      yield BadgeCountState(event.count);
-    }
-    // Handle other events here
+    await DioHelper.postData(url: COMPLAINTS, data: {
+      "name": userName,
+      "phone": phone,
+      "email": email,
+      "message": msg
+    }).then((value) {
+      emit(SuccessComplaintsState());
+      Utils.toast(
+        body: 'Complaints sent successfully',
+      );
+      Utils.popNavigate(context);
+    }).catchError((error) {
+      emit(ErrorComplaintsState(error));
+      Utils.toast(
+        body: 'Error in send complaints',
+      );
+    });
   }
-
-  // ...
 }
-
-
-4. In your widget that contains the bottom navigation bar, listen to the BLoC state changes and update the badge count accordingly.
-
-dart
-class YourWidget extends StatelessWidget {
-  // ...
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocBuilder<YourBloc, YourState>(
-      builder: (context, state) {
-        if (state is BadgeCountState) {
-          return BottomNavigationBar(
-            // ...
-            items: [
-              BottomNavigationBarItem(
-                icon: Icon(Icons.home),
-                label: 'Home',
-                badge: state.count > 0 ? Badge(count: state.count) : null,
-              ),
-              // ... Add other bottom navigation bar items
-            ],
-            // ...
-          );
-        }
-        // Handle other states or return a default widget
-        return SizedBox();
-      },
-    );
-  }
-
-  // ...
-}
-
-
-5. Whenever you want to update the badge count, dispatch the UpdateBadgeCountEvent to the BLoC.
-
-dart
-BlocProvider.of<YourBloc>(context).add(UpdateBadgeCountEvent(newCount));
-
-
-Replace YourBloc, YourEvent, YourState with the actual names of your BLoC class, event class, and state class respectively. Also, make sure you have set up the correct BLoC provider and BlocBuilder in your widget tree.
-
-This approach allows you to update the badge count dynamically based on events or any other logic you define in your BLoC.*/

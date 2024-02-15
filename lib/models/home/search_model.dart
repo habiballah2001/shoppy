@@ -22,7 +22,7 @@ class SearchDataModel {
   int? perPage;
   String? prevPageUrl;
   int? to;
-  double? total;
+  dynamic total;
 
   SearchDataModel.fromJson(Map<String, dynamic> json) {
     currentPage = json['current_page'];
@@ -44,7 +44,6 @@ class SearchDataModel {
     total = json['total'];
   }
 }
-
 
 class SearchProductModel {
   int? id;

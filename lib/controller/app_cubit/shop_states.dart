@@ -2,7 +2,6 @@ import '../../models/cart/change_cart_model.dart';
 import '../../models/cart/get_cart_model.dart';
 import '../../models/category/category_product_model.dart';
 import '../../models/favorite/change_fav_model.dart';
-import '../../models/cart/update_cart_model.dart';
 import '../../models/favorite/get_fav_model.dart';
 
 abstract class AppStates {}
@@ -19,6 +18,17 @@ class LoadingHomeState extends AppStates {}
 class SuccessHomeState extends AppStates {}
 
 class ErrorHomeState extends AppStates {}
+
+//SEARCH
+class LoadingSearchState extends AppStates {}
+
+class SuccessSearchState extends AppStates {}
+
+class ErrorSearchState extends AppStates {
+  final String? error;
+
+  ErrorSearchState(this.error);
+}
 
 //CATEGORIES
 class SuccessCategoriesState extends AppStates {}
@@ -55,7 +65,7 @@ class ErrorGetFavState extends AppStates {
 }
 
 //CART
-class LoadingCartState extends AppStates {}
+class LoadingGetCartState extends AppStates {}
 
 class SuccessGetCartState extends AppStates {
   final GetCartModel? getCartModel;
@@ -98,15 +108,12 @@ class ErrorChangeCartState extends AppStates {
 }
 
 //UPDATE CART
-class SuccessUpdateCartState extends AppStates {
-  final UpdateCartModel? model;
+class LoadingUpdateCartState extends AppStates {}
 
-  SuccessUpdateCartState(this.model);
-}
+class SuccessUpdateCartState extends AppStates {}
 
 class ErrorUpdateCartState extends AppStates {
   final String? error;
-
   ErrorUpdateCartState(this.error);
 }
 
@@ -121,17 +128,6 @@ class SuccessDeleteCartProductState extends AppStates {
   SuccessDeleteCartProductState(this.changeCartModel);
 }
 
-//SEARCH
-class LoadingSearchState extends AppStates {}
-
-class SuccessSearchState extends AppStates {}
-
-class ErrorSearchState extends AppStates {
-  final String? error;
-
-  ErrorSearchState(this.error);
-}
-
 //ADD ORDER
 class LoadingAddOrderState extends AppStates {}
 
@@ -141,6 +137,28 @@ class ErrorAddOrderState extends AppStates {
   final String? error;
 
   ErrorAddOrderState(this.error);
+}
+
+//ADD ORDER
+class LoadingEstimateOrderState extends AppStates {}
+
+class SuccessEstimateOrderState extends AppStates {}
+
+class ErrorEstimateOrderState extends AppStates {
+  final String? error;
+
+  ErrorEstimateOrderState(this.error);
+}
+
+//CANCEL ORDER
+class LoadingCancelOrderState extends AppStates {}
+
+class SuccessCancelOrderState extends AppStates {}
+
+class ErrorCancelOrderState extends AppStates {
+  final String? error;
+
+  ErrorCancelOrderState(this.error);
 }
 
 //GET ORDERS
@@ -165,7 +183,40 @@ class ErrorGetOrderDetailsState extends AppStates {
   ErrorGetOrderDetailsState(this.error);
 }
 
-//GET ORDERS
+//Add Address
+class LoadingAddAddressState extends AppStates {}
+
+class SuccessAddAddressState extends AppStates {}
+
+class ErrorAddAddressState extends AppStates {
+  final String? error;
+
+  ErrorAddAddressState(this.error);
+}
+
+//Get Address
+class LoadingGetAddressState extends AppStates {}
+
+class SuccessGetAddressState extends AppStates {}
+
+class ErrorGetAddressState extends AppStates {
+  final String? error;
+
+  ErrorGetAddressState(this.error);
+}
+
+//Get Address
+class LoadingDeleteAddressState extends AppStates {}
+
+class SuccessDeleteAddressState extends AppStates {}
+
+class ErrorDeleteAddressState extends AppStates {
+  final String? error;
+
+  ErrorDeleteAddressState(this.error);
+}
+
+//FQS
 class LoadingFAQsState extends AppStates {}
 
 class SuccessFAQsState extends AppStates {}
@@ -174,4 +225,26 @@ class ErrorFAQsState extends AppStates {
   final String? error;
 
   ErrorFAQsState(this.error);
+}
+
+//Complaints
+class LoadingComplaintsState extends AppStates {}
+
+class SuccessComplaintsState extends AppStates {}
+
+class ErrorComplaintsState extends AppStates {
+  final String? error;
+
+  ErrorComplaintsState(this.error);
+}
+
+//Complaints
+class LoadingLangState extends AppStates {}
+
+class SuccessLangState extends AppStates {}
+
+class ErrorLangState extends AppStates {
+  final String? error;
+
+  ErrorLangState(this.error);
 }
